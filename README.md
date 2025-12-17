@@ -88,8 +88,12 @@ Create a `.env` file:
 
 ```env
 PORT=3000
-MONGO_URI=your_mongodb_connection_string
-STRIPE_SECRET_KEY=your_stripe_secret_key
+
+MONGO_URI=
+
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+CLIENT_URL=
 ```
 
 ### Frontend Setup
