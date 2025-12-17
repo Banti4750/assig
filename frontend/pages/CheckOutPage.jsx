@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Navbar from '../components/Navbar'
 import { useCart } from '../context/useCart'
 import { useNavigate } from 'react-router-dom'
-import { Trash2, ShoppingBag, CreditCard } from 'lucide-react'
+import { Trash2, ShoppingBag, CreditCard, Mail } from 'lucide-react'
 
 const CheckOutPage = () => {
     const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCart()
@@ -10,29 +10,69 @@ const CheckOutPage = () => {
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [customerEmail, setCustomerEmail] = useState('')
+    const [orderIds, setOrderIds] = useState([])
 
     const shipping = 5.99
     const tax = getTotalPrice() * 0.1
     const total = getTotalPrice() + shipping + tax
 
-    const handleStripeCheckout = async () => {
-        setLoading(true)
-        setError(null)
-
+    const createPendingOrders = async () => {
         try {
-            const response = await fetch('http://localhost:3000/api/v1/order/create-checkout-session', {
+            const response = await fetch('http://localhost:3000/api/v1/order/create-pending-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    email: customerEmail,
                     items: items
                 }),
             })
 
             const data = await response.json()
 
+            if (response.ok && data.orderIds) {
+                setOrderIds(data.orderIds)
+                return data.orderIds
+            } else {
+                throw new Error(data.message || 'Failed to create pending orders')
+            }
+        } catch (err) {
+            console.error('Error creating pending orders:', err)
+            throw err
+        }
+    }
+
+    const handleStripeCheckout = async () => {
+        if (!customerEmail) {
+            setError('Please enter your email address')
+            return
+        }
+
+        setLoading(true)
+        setError(null)
+
+        try {
+            const orderIds = await createPendingOrders()
+
+            const response = await fetch('http://localhost:3000/api/v1/order/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    items: items,
+                    customerEmail: customerEmail,
+                    orderIds: orderIds
+                }),
+            })
+
+            const data = await response.json()
+
             if (data.url) {
+
+
                 // Redirect to Stripe Checkout
                 window.location.href = data.url
             } else {
@@ -40,7 +80,7 @@ const CheckOutPage = () => {
             }
         } catch (err) {
             console.error('Checkout error:', err)
-            setError('Failed to process checkout. Please try again.')
+            setError(err.message || 'Failed to process checkout. Please try again.')
             setLoading(false)
         }
     }
@@ -79,6 +119,28 @@ const CheckOutPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - Cart Items */}
                     <div className="lg:col-span-2">
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <Mail className="w-5 h-5" />
+                                Customer Information
+                            </h2>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address *
+                            </label>
+                            <input
+                                type="email"
+                                id="email"
+                                value={customerEmail}
+                                onChange={(e) => setCustomerEmail(e.target.value)}
+                                required
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="you@example.com"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                Your order confirmation and receipt will be sent here.
+                            </p>
+                        </div>
+
                         <div className="bg-white rounded-lg shadow-md p-6">
                             <h2 className="text-xl font-semibold mb-4">Cart Items</h2>
                             <div className="space-y-4">
@@ -124,7 +186,6 @@ const CheckOutPage = () => {
                         </div>
                     </div>
 
-                    {/* Right Column - Order Summary */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
                             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
@@ -152,7 +213,7 @@ const CheckOutPage = () => {
 
                             <button
                                 onClick={handleStripeCheckout}
-                                disabled={loading}
+                                disabled={loading || !customerEmail}
                                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {loading ? (
@@ -163,7 +224,7 @@ const CheckOutPage = () => {
                                 ) : (
                                     <>
                                         <CreditCard className="w-5 h-5" />
-                                        Proceed to Payment
+                                        {customerEmail ? 'Proceed to Payment' : 'Enter Email to Continue'}
                                     </>
                                 )}
                             </button>
