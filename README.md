@@ -72,8 +72,8 @@ A full-stack **E-Commerce Web Application** that provides a seamless online shop
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/ecommerce-app.git
-cd ecommerce-app
+[git clone https://github.com/your-username/ecommerce-app.git](https://github.com/Banti4750/assig.git)
+
 ```
 
 ### Backend Setup
