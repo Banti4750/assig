@@ -79,7 +79,7 @@ cd ecommerce-app
 ### Backend Setup
 
 ```bash
-cd server
+cd backend
 npm install
 npm run dev
 ```
@@ -99,7 +99,7 @@ CLIENT_URL=
 ### Frontend Setup
 
 ```bash
-cd client
+cd frontend
 npm install
 npm run dev
 ```
@@ -128,18 +128,6 @@ CVV: Any 3 digits
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome!
-Feel free to fork the repository and submit a pull request.
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**.
-
----
 
 ## 👨‍💻 Author
 
